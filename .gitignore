@@ -1,0 +1,5 @@
+node_modules/
+service/native/.build/
+service/native/*.app/
+*.tgz
+.DS_Store

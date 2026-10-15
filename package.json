@@ -1,0 +1,63 @@
+{
+  "name": "opencode-transcript",
+  "version": "0.1.0",
+  "description": "OpenCode plugin that transcribes system audio live, shows a rolling transcript panel in the session, and exposes the transcript to agents as a tool.",
+  "type": "module",
+  "license": "MIT",
+  "author": "safety-adam",
+  "homepage": "https://github.com/safety-adam/opencode-transcript#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/safety-adam/opencode-transcript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/safety-adam/opencode-transcript/issues"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/index.ts",
+    "./tui": "./dist/tui.js"
+  },
+  "files": [
+    "src",
+    "dist",
+    "service",
+    "scripts",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "build": "node scripts/build-tui.mjs",
+    "prepack": "npm run build",
+    "service:build": "service/native/make-app.sh"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "transcript",
+    "transcription",
+    "whisper",
+    "speech-to-text",
+    "tui"
+  ],
+  "dependencies": {
+    "@opencode/plugin": "latest"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-typescript": "^7.24.0",
+    "babel-preset-solid": "^1.9.0"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.5.8",
+    "@opentui/solid": ">=0.5.8",
+    "solid-js": ">=1.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/core": { "optional": true },
+    "@opentui/solid": { "optional": true },
+    "solid-js": { "optional": true }
+  }
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>transcript-capture</string>
+    <key>CFBundleIdentifier</key>
+    <string>dev.opencode.transcript-capture</string>
+    <key>CFBundleExecutable</key>
+    <string>transcript-capture</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSAudioCaptureUsageDescription</key>
+    <string>transcript-capture records system audio so OpenCode can transcribe meetings as they happen. It captures audio only, never the screen.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>transcript-capture uses the microphone so OpenCode can include your own voice in the transcript.</string>
+</dict>
+</plist>
