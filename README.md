@@ -184,9 +184,10 @@ more accuracy at the cost of speed, change `modelName` in
 nouns better.
 
 The stream is gated on the room noise floor, so silence never reaches the model,
-and Whisper's habitual silence phrases are dropped. The last few seconds stay as
-grey text in the panel until the model agrees on them, and they are committed
-when you stop or the audio goes quiet.
+and Whisper's habitual silence phrases and sound annotations are dropped. Each
+pass advances the audio cursor to the exact end of the last committed word, using
+Whisper's word timings, so no audio is skipped between segments. The trailing
+words stay as grey text in the panel until they commit.
 
 ## Files the service writes
 

@@ -243,22 +243,37 @@ final class StreamingASR: @unchecked Sendable {
 
         let results: [TranscriptionResult]
         do {
-            if let promptTokens {
-                var options = DecodingOptions()
-                options.promptTokens = promptTokens
-                results = try await pipe.transcribe(audioArray: chunk, decodeOptions: options)
-            } else {
-                // No prompt, keep WhisperKit's internal defaults.
-                results = try await pipe.transcribe(audioArray: chunk)
-            }
+            var options = DecodingOptions()
+            // Real word timings, so the cursor advances to the end of the last
+            // committed word instead of a guessed fraction of the window.
+            options.wordTimestamps = true
+            if let promptTokens { options.promptTokens = promptTokens }
+            results = try await pipe.transcribe(audioArray: chunk, decodeOptions: options)
         } catch {
             Paths.log("transcribe error. \(error)")
             return
         }
 
-        let fullText = results.map { $0.text }.joined(separator: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let newWords = fullText.split(whereSeparator: { $0.isWhitespace }).map { String($0) }
+        // Words with their start and end times inside the chunk, in order.
+        var newWords: [String] = []
+        var wordStarts: [Float] = []
+        var wordEnds: [Float] = []
+        for segment in results.flatMap({ $0.segments }) {
+            for word in segment.words ?? [] {
+                let cleaned = word.word.trimmingCharacters(in: .whitespacesAndNewlines)
+                if cleaned.isEmpty { continue }
+                newWords.append(cleaned)
+                wordStarts.append(word.start)
+                wordEnds.append(word.end)
+            }
+        }
+        let haveTimings = wordEnds.count == newWords.count && !newWords.isEmpty
+        if newWords.isEmpty {
+            // Timings missing, fall back to the plain text.
+            let fullText = results.map { $0.text }.joined(separator: " ")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            newWords = fullText.split(whereSeparator: { $0.isWhitespace }).map { String($0) }
+        }
 
         if newWords.isEmpty {
             if chunkSeconds >= forceCommitSeconds || forceCommit {
@@ -291,11 +306,20 @@ final class StreamingASR: @unchecked Sendable {
 
         if commitCount > 0 {
             let committedText = newWords[0..<commitCount].joined(separator: " ")
-            // Estimate the audio cutoff by the fraction of words committed.
-            let frac = Double(commitCount) / Double(newWords.count)
-            let cutFrames = min(chunk.count, max(0, Int(Double(chunk.count) * frac)))
-            let wallStart = TimeInterval(baseFrame) / sampleRate
-            let wallEnd = TimeInterval(baseFrame + cutFrames) / sampleRate
+            // Cut at the end of the last committed word. Exact when timings are
+            // present, otherwise the old word fraction as a fallback.
+            let cutSeconds: Double
+            let startSeconds: Double
+            if haveTimings {
+                cutSeconds = Double(wordEnds[commitCount - 1])
+                startSeconds = Double(wordStarts[0])
+            } else {
+                cutSeconds = chunkSeconds * Double(commitCount) / Double(newWords.count)
+                startSeconds = 0
+            }
+            let cutFrames = min(chunk.count, max(1, Int(cutSeconds * sampleRate)))
+            let wallStart = TimeInterval(baseFrame) / sampleRate + startSeconds
+            let wallEnd = TimeInterval(baseFrame) / sampleRate + cutSeconds
             emitCommitted(committedText, wallStart: wallStart, wallEnd: wallEnd)
             advanceCommitted(by: cutFrames)
             lastHypothesisWords = Array(newWords[commitCount...])
